@@ -5,15 +5,13 @@ Revises: 5e172e60e85f
 Create Date: 2026-05-29 11:19:30.839172
 
 """
-from typing import Sequence, Union
 
-from alembic import op
-import sqlalchemy as sa
+from typing import Sequence, Union
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ab24d44c8e26'
-down_revision: Union[str, Sequence[str], None] = '5e172e60e85f'
+revision: str = "ab24d44c8e26"
+down_revision: Union[str, Sequence[str], None] = "5e172e60e85f"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
