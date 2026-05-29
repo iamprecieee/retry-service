@@ -56,17 +56,7 @@ curl http://127.0.0.1:8000/requests
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    Client([Client]) -->|1. POST /requests| API[FastAPI App]
-    API -->|2. Save State| DB[(SQLite)]
-    API -.->|3. Return ID and status| Client 
-
-    Worker[asyncio Worker] -->|4. Poll Due Requests| DB
-    Worker -->|5. Execute HTTP| Ext[External Service]
-    Ext -.->|6. Return Response| Worker
-    DB <-|7. Update Status/Attempts| Worker
-```
+[Diagram](https://www.figma.com/board/hS6IZWm9RgYnJgNb0aUucY/Retry-Service-Architectural-Diagram?node-id=0-1&t=GejUQzMXsorgYfDr-1)
 
 ## Core Concepts
 
