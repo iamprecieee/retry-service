@@ -1,9 +1,21 @@
+import json
 from datetime import datetime
 from typing import Literal
 
-from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from app.config import settings
+
+METHODS_WITHOUT_BODY = {"GET", "DELETE", "HEAD"}
+MAX_URL_LENGTH = 2048
+MAX_BODY_SIZE_BYTES = 1_048_576  # 1MB
 
 
 class SuccessResponse[DataT](BaseModel):
@@ -23,6 +35,34 @@ class RequestCreate(BaseModel):
     body: str | None = None
     max_retries: int = Field(default=settings.default_max_retries, ge=0)
     backoff_ms: int = Field(default=settings.default_backoff_ms, ge=100)
+
+    @field_validator("url")
+    @classmethod
+    def validate_url_length(cls, value: AnyHttpUrl) -> AnyHttpUrl:
+        if len(str(value)) > MAX_URL_LENGTH:
+            raise ValueError(f"url must not exceed {MAX_URL_LENGTH} characters")
+        return value
+
+    @field_validator("body")
+    @classmethod
+    def validate_body_is_json(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        if len(value.encode("utf-8")) > MAX_BODY_SIZE_BYTES:
+            raise ValueError(
+                f"body must not exceed {MAX_BODY_SIZE_BYTES // 1_048_576}MB"
+            )
+        try:
+            json.loads(value)
+        except json.JSONDecodeError:
+            raise ValueError("body must be valid JSON")
+        return value
+
+    @model_validator(mode="after")
+    def validate_body_allowed_for_method(self) -> "RequestCreate":
+        if self.method in METHODS_WITHOUT_BODY and self.body is not None:
+            raise ValueError(f"body is not allowed for {self.method} requests")
+        return self
 
 
 class RequestQueued(BaseModel):
