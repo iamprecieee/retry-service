@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import func as sqlfunc
 
 from app.models import Attempt, Request
 
@@ -49,6 +50,7 @@ async def fetch_due_requests(session: AsyncSession) -> Sequence[Request]:
 
 
 async def update_request(session: AsyncSession, request_id: str, data: dict) -> None:
+    data["updated_at"] = sqlfunc.now()
     await session.execute(
         update(Request).where(Request.id == request_id).values(**data)
     )

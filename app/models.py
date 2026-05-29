@@ -32,6 +32,7 @@ class Request(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+        onupdate=func.now(),
     )
 
     attempts: Mapped[list["Attempt"]] = relationship(
@@ -52,7 +53,7 @@ class Attempt(Base):
         String, ForeignKey("requests.id"), nullable=False
     )
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
-    attempted_at: Mapped[float] = mapped_column(
+    attempted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
     )
