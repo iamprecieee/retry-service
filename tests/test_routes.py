@@ -8,7 +8,7 @@ pytestmark = pytest.mark.asyncio
 
 async def test_enqueue_request_success(async_client: AsyncClient):
     response = await async_client.post(
-        "/requests",
+        "/request",
         json={
             "url": "http://example.com",
             "method": "POST",
@@ -27,7 +27,7 @@ async def test_enqueue_request_success(async_client: AsyncClient):
 
 async def test_enqueue_request_invalid_url(async_client: AsyncClient):
     response = await async_client.post(
-        "/requests", json={"url": "not-a-url", "method": "POST"}
+        "/request", json={"url": "not-a-url", "method": "POST"}
     )
     assert response.status_code == 422
     data = response.json()
@@ -36,14 +36,14 @@ async def test_enqueue_request_invalid_url(async_client: AsyncClient):
 
 async def test_enqueue_request_unsupported_method(async_client: AsyncClient):
     response = await async_client.post(
-        "/requests", json={"url": "http://example.com", "method": "OPTIONS"}
+        "/request", json={"url": "http://example.com", "method": "OPTIONS"}
     )
     assert response.status_code == 422
 
 
 async def test_enqueue_request_invalid_backoff(async_client: AsyncClient):
     response = await async_client.post(
-        "/requests",
+        "/request",
         json={"url": "http://example.com", "method": "GET", "backoff_ms": 50},
     )
     assert response.status_code == 422
@@ -57,7 +57,7 @@ async def test_get_request_not_found(async_client: AsyncClient):
 
 async def test_get_request_success(async_client: AsyncClient):
     resp1 = await async_client.post(
-        "/requests", json={"url": "http://example.com", "method": "GET"}
+        "/request", json={"url": "http://example.com", "method": "GET"}
     )
     req_id = resp1.json()["data"]["id"]
 
@@ -70,10 +70,10 @@ async def test_get_request_success(async_client: AsyncClient):
 
 async def test_list_requests_all(async_client: AsyncClient):
     await async_client.post(
-        "/requests", json={"url": "http://example.com", "method": "GET"}
+        "/request", json={"url": "http://example.com", "method": "GET"}
     )
     await async_client.post(
-        "/requests", json={"url": "http://example.org", "method": "GET"}
+        "/request", json={"url": "http://example.org", "method": "GET"}
     )
 
     resp = await async_client.get("/requests")
@@ -85,7 +85,7 @@ async def test_list_requests_all(async_client: AsyncClient):
 
 async def test_list_requests_by_status(async_client: AsyncClient):
     resp1 = await async_client.post(
-        "/requests", json={"url": "http://example.com", "method": "GET"}
+        "/request", json={"url": "http://example.com", "method": "GET"}
     )
     req_id = resp1.json()["data"]["id"]
 

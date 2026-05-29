@@ -30,16 +30,16 @@ uv run uvicorn mock_server:app --port 9000
 
 ## API Endpoints (`curl` Examples)
 
-### 1. Enqueue a Request (`POST /requests`)
+### 1. Enqueue a Request (`POST /request`)
 ```bash
-curl -X POST http://127.0.0.1:8000/requests \
+curl -X POST http://127.0.0.1:8000/request \
   -H "Content-Type: application/json" \
   -d '{
     "url": "http://127.0.0.1:9000/unstable",
     "method": "POST",
     "body": "{\"payment\": \"test\"}",
-    "max_retries": 5,
-    "backoff_ms": 1000
+    "maxRetries": 5,
+    "backoffMs": 1000
   }'
 ```
 
