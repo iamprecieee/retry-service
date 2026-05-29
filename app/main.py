@@ -18,11 +18,20 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     from alembic import command
     from alembic.config import Config
+    from app.worker import run_worker
 
     alembic_cfg = Config("alembic.ini")
     await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
 
+    worker_task = asyncio.create_task(run_worker())
+
     yield
+
+    worker_task.cancel()
+    try:
+        await worker_task
+    except asyncio.CancelledError:
+        pass
 
     await engine.dispose()
 
