@@ -10,6 +10,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.alias_generators import to_camel
 
 from app.config import settings
 
@@ -32,6 +33,8 @@ class ErrorResponse(BaseModel):
 
 
 class RequestCreate(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     url: AnyHttpUrl
     method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
     body: str | None = None
@@ -73,7 +76,9 @@ class RequestQueued(BaseModel):
 
 
 class AttemptResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True, alias_generator=to_camel, populate_by_name=True
+    )
 
     id: str
     attempt_number: int
@@ -85,7 +90,9 @@ class AttemptResponse(BaseModel):
 
 
 class RequestResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True, alias_generator=to_camel, populate_by_name=True
+    )
 
     id: str
     url: str

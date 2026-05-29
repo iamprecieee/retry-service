@@ -55,9 +55,9 @@ async def poll_until_terminal(client: httpx.AsyncClient, request_id: str) -> dic
         attempts = data.get("attempts", [])
         if len(attempts) > seen_attempts:
             for attempt in attempts[seen_attempts:]:
-                num = attempt["attempt_number"]
-                code = attempt["status_code"] or "—"
-                wait = attempt["wait_ms"]
+                num = attempt["attemptNumber"]
+                code = attempt["statusCode"] or "—"
+                wait = attempt["waitMs"]
                 err = attempt["error"] or "—"
 
                 if code and int(code) >= 400:
@@ -88,11 +88,11 @@ def print_result(data: dict) -> None:
     """Print the final summary with backoff progression."""
     print()
     print(f"  Result     : {data['status'].upper()}")
-    print(f"  Attempts   : {data['attempt_count']}")
+    print(f"  Attempts   : {data['attemptCount']}")
 
     # Show backoff doubling between attempts
     attempts = data.get("attempts", [])
-    waits = [a["wait_ms"] for a in attempts if a["wait_ms"] is not None]
+    waits = [a["waitMs"] for a in attempts if a["waitMs"] is not None]
     if len(waits) >= 2:
         print()
         print("  Backoff progression:")
@@ -131,8 +131,8 @@ async def main() -> None:
                 "url": f"{MOCK_URL}/unstable",
                 "method": "POST",
                 "body": '{"payment": "test"}',
-                "max_retries": 5,
-                "backoff_ms": 1000,
+                "maxRetries": 5,
+                "backoffMs": 1000,
             },
         )
         print(f"  Queued with ID: {id1}")
@@ -148,8 +148,8 @@ async def main() -> None:
             {
                 "url": f"{MOCK_URL}/bad-request",
                 "method": "POST",
-                "max_retries": 5,
-                "backoff_ms": 1000,
+                "maxRetries": 5,
+                "backoffMs": 1000,
             },
         )
         print(f"  Queued with ID: {id2}")
@@ -165,8 +165,8 @@ async def main() -> None:
             {
                 "url": f"{MOCK_URL}/always-fail",
                 "method": "POST",
-                "max_retries": 3,
-                "backoff_ms": 1000,
+                "maxRetries": 3,
+                "backoffMs": 1000,
             },
         )
         print(f"  Queued with ID: {id3}")
@@ -177,13 +177,13 @@ async def main() -> None:
         # ── Summary ──────────────────────────────────────────────────
         print_header("Summary")
         print(
-            f"  Scenario 1 (5xx→success)  : {result1['status']:<10} — {result1['attempt_count']} attempts"
+            f"  Scenario 1 (5xx→success)  : {result1['status']:<10} — {result1['attemptCount']} attempts"
         )
         print(
-            f"  Scenario 2 (4xx terminal) : {result2['status']:<10} — {result2['attempt_count']} attempt(s)"
+            f"  Scenario 2 (4xx terminal) : {result2['status']:<10} — {result2['attemptCount']} attempt(s)"
         )
         print(
-            f"  Scenario 3 (dead-letter)  : {result3['status']:<10} — {result3['attempt_count']} attempts"
+            f"  Scenario 3 (dead-letter)  : {result3['status']:<10} — {result3['attemptCount']} attempts"
         )
         print()
 

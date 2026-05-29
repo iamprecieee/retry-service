@@ -11,10 +11,10 @@ from app.schemas import (
     SuccessResponse,
 )
 
-router = APIRouter(prefix="/requests", tags=["requests"])
+router = APIRouter(tags=["requests"])
 
 
-@router.post("", response_model=SuccessResponse[RequestQueued], status_code=201)
+@router.post("/request", response_model=SuccessResponse[RequestQueued], status_code=201)
 async def enqueue_request(
     payload: RequestCreate,
     session: AsyncSession = Depends(get_session),
@@ -35,7 +35,7 @@ async def enqueue_request(
 
 
 @router.get(
-    "/{request_id}",
+    "/requests/{request_id}",
     response_model=SuccessResponse[RequestResponse],
     status_code=200,
 )
@@ -52,7 +52,7 @@ async def get_request(
     )
 
 
-@router.get("", response_model=SuccessResponse[RequestListData], status_code=200)
+@router.get("/requests", response_model=SuccessResponse[RequestListData], status_code=200)
 async def list_requests(
     status: str | None = None,
     session: AsyncSession = Depends(get_session),
