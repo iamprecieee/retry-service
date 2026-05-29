@@ -13,7 +13,7 @@ from app.database import AsyncSessionFactory
 logger = logging.getLogger(__name__)
 
 
-async def process_request(request_id: str) -> None:
+async def process_request(request_id: str, http_client: httpx.AsyncClient) -> None:
     async with AsyncSessionFactory() as session:
         request = await repository.get_request_by_id(session, request_id)
         if request is None:
@@ -41,23 +41,19 @@ async def process_request(request_id: str) -> None:
     response_body = None
 
     try:
-        async with httpx.AsyncClient(
-            timeout=httpx.Timeout(10.0, connect=5.0),
-            follow_redirects=True,
-        ) as client:
-            if request.body is not None:
-                response = await client.request(
-                    method=request.method,
-                    url=request.url,
-                    content=request.body,
-                )
-            else:
-                response = await client.request(
-                    method=request.method,
-                    url=request.url,
-                )
-            status_code = response.status_code
-            response_body = response.text
+        if request.body is not None:
+            response = await http_client.request(
+                method=request.method,
+                url=request.url,
+                content=request.body,
+            )
+        else:
+            response = await http_client.request(
+                method=request.method,
+                url=request.url,
+            )
+        status_code = response.status_code
+        response_body = response.text
 
     except httpx.TimeoutException as exc:
         error = f"timeout: {exc}"
@@ -146,17 +142,32 @@ async def _update_request_after_attempt(
 async def run_worker() -> None:
     logger.info("worker started")
 
-    while True:
-        try:
-            async with AsyncSessionFactory() as session:
-                due_requests = await repository.fetch_due_requests(session)
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(10.0, connect=5.0),
+        follow_redirects=True,
+    ) as http_client:
+        while True:
+            try:
+                async with AsyncSessionFactory() as session:
+                    due_requests = await repository.fetch_due_requests(session)
 
-            if due_requests:
-                await asyncio.gather(*[process_request(req.id) for req in due_requests])
-        except asyncio.CancelledError:
-            logger.info("worker stopped")
-            raise
-        except Exception:
-            logger.exception("worker cycle failed")
+                if due_requests:
+                    results = await asyncio.gather(
+                        *[process_request(req.id, http_client) for req in due_requests],
+                        return_exceptions=True,
+                    )
 
-        await asyncio.sleep(settings.worker_interval_ms / 1000)
+                    for request, result in zip(due_requests, results):
+                        if isinstance(result, Exception):
+                            logger.exception(
+                                "processing request %s failed",
+                                request.id,
+                                exc_info=result,
+                            )
+            except asyncio.CancelledError:
+                logger.info("worker stopped")
+                raise
+            except Exception:
+                logger.exception("worker cycle failed")
+
+            await asyncio.sleep(settings.worker_interval_ms / 1000)
