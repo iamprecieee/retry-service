@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Literal
+from typing import Generic, Literal, TypeVar
 
 from pydantic import (
     AnyHttpUrl,
@@ -17,8 +17,10 @@ METHODS_WITHOUT_BODY = {"GET", "DELETE", "HEAD"}
 MAX_URL_LENGTH = 2048
 MAX_BODY_SIZE_BYTES = 1_048_576  # 1MB
 
+DataT = TypeVar("DataT")
 
-class SuccessResponse[DataT](BaseModel):
+
+class SuccessResponse(BaseModel, Generic[DataT]):
     status: Literal["success"] = "success"
     message: str
     data: DataT | None = None
@@ -33,8 +35,8 @@ class RequestCreate(BaseModel):
     url: AnyHttpUrl
     method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
     body: str | None = None
-    max_retries: int = Field(default=settings.default_max_retries, ge=0)
-    backoff_ms: int = Field(default=settings.default_backoff_ms, ge=100)
+    max_retries: int = Field(default=settings.default_max_retries, ge=0, le=15)
+    backoff_ms: int = Field(default=settings.default_backoff_ms, ge=100, le=60_000)
 
     @field_validator("url")
     @classmethod
