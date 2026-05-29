@@ -62,7 +62,9 @@ async def poll_until_terminal(client: httpx.AsyncClient, request_id: str) -> dic
 
                 if code and int(code) >= 400:
                     wait_info = f"  → waiting {wait}ms before retry..." if wait else ""
-                    print(f"  [{timestamp()}]  Attempt {num}: HTTP {code} ✗  {err}{wait_info}")
+                    print(
+                        f"  [{timestamp()}]  Attempt {num}: HTTP {code} ✗  {err}{wait_info}"
+                    )
                 else:
                     print(f"  [{timestamp()}]  Attempt {num}: HTTP {code} ✓  Success!")
 
@@ -95,8 +97,8 @@ def print_result(data: dict) -> None:
         print()
         print("  Backoff progression:")
         for i, w in enumerate(waits):
-            ratio = f"  (×{w / waits[i-1]:.2f})" if i > 0 else ""
-            print(f"    Attempt {i+1} wait: {w}ms{ratio}")
+            ratio = f"  (×{w / waits[i - 1]:.2f})" if i > 0 else ""
+            print(f"    Attempt {i + 1} wait: {w}ms{ratio}")
     print()
 
 
@@ -123,13 +125,16 @@ async def main() -> None:
         # ── Scenario 1: 5xx → success ────────────────────────────────
         print_header("Scenario 1: Transient 5xx → eventual success")
         print("  Submitting request to /unstable (fails 3 times, then 200)...")
-        id1 = await submit_request(client, {
-            "url": f"{MOCK_URL}/unstable",
-            "method": "POST",
-            "body": '{"payment": "test"}',
-            "max_retries": 5,
-            "backoff_ms": 1000,
-        })
+        id1 = await submit_request(
+            client,
+            {
+                "url": f"{MOCK_URL}/unstable",
+                "method": "POST",
+                "body": '{"payment": "test"}',
+                "max_retries": 5,
+                "backoff_ms": 1000,
+            },
+        )
         print(f"  Queued with ID: {id1}")
         print("  Waiting for worker to process...")
         result1 = await poll_until_terminal(client, id1)
@@ -138,12 +143,15 @@ async def main() -> None:
         # ── Scenario 2: 4xx terminal ─────────────────────────────────
         print_header("Scenario 2: 4xx is terminal (never retried)")
         print("  Submitting request to /bad-request (always 404)...")
-        id2 = await submit_request(client, {
-            "url": f"{MOCK_URL}/bad-request",
-            "method": "POST",
-            "max_retries": 5,
-            "backoff_ms": 1000,
-        })
+        id2 = await submit_request(
+            client,
+            {
+                "url": f"{MOCK_URL}/bad-request",
+                "method": "POST",
+                "max_retries": 5,
+                "backoff_ms": 1000,
+            },
+        )
         print(f"  Queued with ID: {id2}")
         print("  Waiting for worker to process...")
         result2 = await poll_until_terminal(client, id2)
@@ -152,12 +160,15 @@ async def main() -> None:
         # ── Scenario 3: Dead-letter ──────────────────────────────────
         print_header("Scenario 3: Dead-letter at maxRetries")
         print("  Submitting request to /always-fail (always 500)...")
-        id3 = await submit_request(client, {
-            "url": f"{MOCK_URL}/always-fail",
-            "method": "POST",
-            "max_retries": 3,
-            "backoff_ms": 1000,
-        })
+        id3 = await submit_request(
+            client,
+            {
+                "url": f"{MOCK_URL}/always-fail",
+                "method": "POST",
+                "max_retries": 3,
+                "backoff_ms": 1000,
+            },
+        )
         print(f"  Queued with ID: {id3}")
         print("  Waiting for worker to exhaust retries...")
         result3 = await poll_until_terminal(client, id3)
@@ -165,9 +176,15 @@ async def main() -> None:
 
         # ── Summary ──────────────────────────────────────────────────
         print_header("Summary")
-        print(f"  Scenario 1 (5xx→success)  : {result1['status']:<10} — {result1['attempt_count']} attempts")
-        print(f"  Scenario 2 (4xx terminal) : {result2['status']:<10} — {result2['attempt_count']} attempt(s)")
-        print(f"  Scenario 3 (dead-letter)  : {result3['status']:<10} — {result3['attempt_count']} attempts")
+        print(
+            f"  Scenario 1 (5xx→success)  : {result1['status']:<10} — {result1['attempt_count']} attempts"
+        )
+        print(
+            f"  Scenario 2 (4xx terminal) : {result2['status']:<10} — {result2['attempt_count']} attempt(s)"
+        )
+        print(
+            f"  Scenario 3 (dead-letter)  : {result3['status']:<10} — {result3['attempt_count']} attempts"
+        )
         print()
 
 
